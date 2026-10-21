@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Cofre — Tudo seguro. Tudo no lugar.",
-  description: "O lugar seguro para as senhas do seu escritório. Cofres compartilhados, permissões de equipe e verificação em duas etapas.",
+  description:
+    "O lugar seguro para as senhas do seu escritório. Cofres compartilhados, permissões de equipe e verificação em duas etapas.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -17,6 +18,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/inter-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

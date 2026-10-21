@@ -79,7 +79,7 @@ export function AuthScreen({
         const image = await QRCode.toDataURL(result.uri, {
           width: 208,
           margin: 1,
-          color: { dark: "#174d3e", light: "#ffffff" },
+          color: { dark: "#262626", light: "#ffffff" },
         });
         if (active) {
           setSecret(result.secret);

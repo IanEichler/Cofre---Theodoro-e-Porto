@@ -1046,8 +1046,8 @@ export default function Cofre() {
                           <Brand item={item} />
                           <Star
                             size={16}
-                            fill={item.favorite ? "#d7a14f" : "none"}
-                            color={item.favorite ? "#d7a14f" : "#b4b9b7"}
+                            fill={item.favorite ? "#737373" : "none"}
+                            color={item.favorite ? "#737373" : "#bdbdbd"}
                           />
                         </div>
                         <strong>{item.title}</strong>
