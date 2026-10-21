@@ -118,7 +118,7 @@ export function AuthScreen({
           Cofre<span className="auth-logo-dot">.</span>
         </a>
         <div className="auth-story-copy">
-          <span className="auth-kicker">THEODORO & PORTO · ESCRITÓRIO</span>
+          <span className="auth-kicker">THEODORO & PORTO · USO INTERNO</span>
           <h1>
             Seu escritório.
             <br />
@@ -183,7 +183,7 @@ export function AuthScreen({
               ? "Preparando seu acesso..."
               : passwordStep
                 ? mode === "setup"
-                  ? "Seu escritório começa aqui."
+                  ? "Defina sua senha de acesso."
                   : mode === "reset"
                     ? "Uma nova senha de acesso."
                     : "Você faz parte da equipe."
@@ -342,8 +342,6 @@ export function AuthScreen({
                   await api(mode === "setup" ? "initialize" : "accept-invite", {
                     token,
                     password,
-                    name: form.get("office"),
-                    userName: form.get("name"),
                   });
                   setToken("");
                   setMode("login");
@@ -360,28 +358,6 @@ export function AuthScreen({
                   autoComplete="username"
                 />
               </label>
-              {mode === "setup" && (
-                <div className="form-columns">
-                  <label>
-                    Seu nome
-                    <input
-                      name="name"
-                      placeholder="Seu nome"
-                      maxLength={80}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Nome do escritório
-                    <input
-                      name="office"
-                      defaultValue="Theodoro & Porto"
-                      maxLength={80}
-                      required
-                    />
-                  </label>
-                </div>
-              )}
               {mode === "invite" && name && (
                 <p className="auth-invite-name">Bem-vindo, {name}.</p>
               )}
@@ -514,10 +490,12 @@ export function AuthScreen({
                   Google Authenticator. Uma camada extra de cuidado.
                 </p>
               </div>
-              <button className="auth-demo-link" onClick={onPreview}>
-                Conhecer a interface com dados fictícios
-                <ArrowRight size={13} />
-              </button>
+              {process.env.NODE_ENV === "development" && (
+                <button className="auth-demo-link" onClick={onPreview}>
+                  Conhecer a interface com dados fictícios
+                  <ArrowRight size={13} />
+                </button>
+              )}
             </>
           )}
         </div>

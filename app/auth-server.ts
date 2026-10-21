@@ -10,6 +10,7 @@ import {
   matchTotp,
 } from "./security";
 import { hashPassword, verifyPassword, validatePassword } from "./passwords";
+import { ORGANIZATION_NAME } from "./organization";
 
 export type Member = {
   email: string;
@@ -202,7 +203,7 @@ async function bootstrapInfo(token: unknown) {
       .prepare("SELECT id FROM workspace WHERE id='office'")
       .first()
   )
-    fail("O escritório já foi configurado. Entre com seu e-mail e senha.", 409);
+    fail("O acesso inicial já foi configurado. Entre com seu e-mail e senha.", 409);
   return emailValue(config.COFRE_BOOTSTRAP_EMAIL);
 }
 async function invitationMember(token: unknown) {
@@ -345,7 +346,6 @@ export async function handleAuth(
     const passwordHash = await hashPassword(body.password),
       id = crypto.randomUUID(),
       now = Date.now(),
-      name = validString(body.name, 80) || "Meu escritório",
       userName = validString(body.userName, 80) || email.split("@")[0];
     // Both rows commit together; a second configuration attempt cannot replace the owner.
     try {
@@ -354,7 +354,7 @@ export async function handleAuth(
           .prepare(
             "INSERT INTO workspace(id,name,creator,created) VALUES('office',?,?,?)",
           )
-          .bind(name, id, now),
+          .bind(ORGANIZATION_NAME, id, now),
         db
           .prepare(
             "INSERT INTO members(email,user_id,name,role,status,password_hash,auth_version,created) VALUES(?,?,?,'admin','active',?,1,?)",
@@ -365,10 +365,10 @@ export async function handleAuth(
       if (
         await db.prepare("SELECT id FROM workspace WHERE id='office'").first()
       )
-        fail("O escritório já foi configurado.", 409);
+        fail("O acesso inicial já foi configurado.", 409);
       throw new Error("Setup failed");
     }
-    await log(db, email, "Escritório criado", name);
+    await log(db, email, "Acesso do administrador configurado", email);
     return issueChallenge(
       request,
       (await db

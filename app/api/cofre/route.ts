@@ -1,4 +1,5 @@
 import { seal, unseal } from "../../security";
+import { ORGANIZATION_NAME } from "../../organization";
 import {
   runtime,
   database,
@@ -18,9 +19,6 @@ function canRead(row: any, id: string) {
 }
 async function state(req: Request) {
   const { u, m, db } = await authorize(req);
-  const workspace = await db
-    .prepare("SELECT name FROM workspace WHERE id='office'")
-    .first();
   const rows = (
     await db
       .prepare(
@@ -76,7 +74,7 @@ async function state(req: Request) {
   return {
     phase: "open",
     user: safeMember(m),
-    workspace: workspace?.name || "Meu escritório",
+    workspace: ORGANIZATION_NAME,
     items,
     members,
     activity,
@@ -249,18 +247,6 @@ export async function POST(req: Request) {
         body.revoke ? "Acesso revogado" : "Permissão alterada",
         email,
       );
-      return response({ ok: true });
-    }
-    if (op === "workspace") {
-      if (m.role !== "admin")
-        fail("Apenas administradores podem alterar o escritório.", 403);
-      const name = validString(body.name, 80);
-      if (!name) fail("Informe o nome do escritório.");
-      await db
-        .prepare("UPDATE workspace SET name=? WHERE id='office'")
-        .bind(name)
-        .run();
-      await log(db, u.email, "Configurações atualizadas", name);
       return response({ ok: true });
     }
     fail("Operação não reconhecida.");

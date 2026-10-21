@@ -165,7 +165,7 @@ kbd {
   color: #8e8e8e;
   margin-left: -10px;
 }
-.workspace-picker {
+.organization-badge {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -176,20 +176,20 @@ kbd {
   margin: 31px 4px 26px;
   background: #fefefe;
 }
-.workspace-picker > span:nth-child(2) {
+.organization-badge > span:nth-child(2) {
   flex: 1;
   min-width: 0;
 }
-.workspace-picker strong {
+.organization-badge strong {
   display: block;
   font-size: 12px;
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 120px;
+  max-width: 156px;
 }
-.workspace-picker small {
+.organization-badge small {
   display: block;
   font-size: 10px;
   color: #969696;
@@ -205,7 +205,7 @@ kbd {
   place-items: center;
   color: #717171;
 }
-.workspace-picker > svg {
+.organization-badge > svg {
   color: #929292;
 }
 .nav-label {
@@ -3046,7 +3046,7 @@ tbody tr:hover {
 .vault-nav {
   font-size: 12px;
 }
-.workspace-picker small,
+.organization-badge small,
 .profile small {
   color: #808080;
 }
@@ -4255,15 +4255,15 @@ select:focus {
   border-radius: 11px;
   box-shadow: 0 2px 4px #0000000d;
 }
-.workspace-picker {
+.organization-badge {
   background: #fff;
   border-color: #e6e6e6;
   border-radius: 10px;
 }
-.workspace-picker strong {
+.organization-badge strong {
   color: #333;
 }
-.workspace-picker small,
+.organization-badge small,
 .profile small {
   color: #737373;
 }

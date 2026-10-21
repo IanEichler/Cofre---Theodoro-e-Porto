@@ -40,7 +40,7 @@ await request(n,'save',{item:{title:'Blocked'}},423);
 await request(n,'initialize',{token:'invalid',password},403);
 assert.equal((await request(n,'setup-info',{token:setup})).email,a.email);
 await request(n,'login',{email:'unknown@qa.example',password},401);
-await request(a,'initialize',{token:setup,name:'QA escritório',userName:'Admin QA',password});
+await request(a,'initialize',{token:setup,name:'Outra empresa',password});
 await request(n,'initialize',{token:setup,password},409);
 assert.equal((await request(a)).phase,'enroll');
 await request(a,'save',{item:{title:'Password alone is insufficient'}},423);
@@ -48,6 +48,9 @@ const [enrollment,parallelEnrollment]=await Promise.all([request(a,'enroll'),req
 const auth=await request(a,'verify',{code:await totp(enrollment.secret,Math.floor(Date.now()/30000))});
 assert.equal(auth.recoveryCodes.length,10);
 assert.equal((await request(a)).phase,'open');
+assert.equal((await request(a)).workspace,'Theodoro & Porto');
+await request(a,'workspace',{name:'Outra empresa'},400);
+assert.equal((await request(a)).workspace,'Theodoro & Porto');
 assert(a.cookies.has('cofre_session'));assert(!a.cookies.has('cofre_auth'));
 const payload={title:'Credencial QA',username:'qa@example.com',password:'Somente-Teste!83zM',url:'https://example.com',scope:'team',vault:'Geral',kind:'login',notes:'Nota privada de QA',tags:['QA']};
 await request(a,'save',{item:payload});

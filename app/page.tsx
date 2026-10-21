@@ -53,6 +53,7 @@ import {
   Recovery,
 } from "./components";
 import { AuthScreen } from "./auth-screen";
+import { ORGANIZATION_NAME } from "./organization";
 type Activity = { actor: string; action: string; target: string; time: number };
 type AppState = {
   phase: string;
@@ -214,7 +215,7 @@ export default function Cofre() {
   const items = demo ? samples : state.items || [],
     people = demo ? samplePeople : state.members || [],
     user = demo ? demoPeople[0] : state.user,
-    office = demo ? "Escritório" : state.workspace || "Meu escritório",
+    office = ORGANIZATION_NAME,
     active = items.filter((i) => !i.deleted),
     weak = active.filter(
       (i) => i.kind === "login" && strength(i.password) === "Fraca",
@@ -479,16 +480,15 @@ export default function Cofre() {
           </span>
           Cofre<span className="wordmark-dot">.</span>
         </a>
-        <button className="workspace-picker" onClick={() => nav("settings")}>
+        <div className="organization-badge">
           <span className="office-icon">
             <Building2 size={18} />
           </span>
           <span>
             <strong>{office}</strong>
-            <small>Espaço de trabalho</small>
+            <small>Uso interno</small>
           </span>
-          <ChevronDown size={15} />
-        </button>
+        </div>
         <div className="nav-label">MEU COFRE</div>
         <nav aria-label="Navegação principal">
           {navItems.map(({ id, label, Icon, count }) => (
@@ -596,10 +596,10 @@ export default function Cofre() {
             >
               Cofre<span>.</span>
             </a>
-            <span className="desktop-crumb">Espaço de trabalho</span>
+            <span className="desktop-crumb">Cofre</span>
             <ChevronRight size={14} className="desktop-crumb" />
             <strong>{office}</strong>
-            <span className="team-plan">Equipe</span>
+            <span className="team-plan">Uso interno</span>
           </div>
           <div className="topbar-actions">
             <div className="global-search">
@@ -648,7 +648,7 @@ export default function Cofre() {
               Você está explorando uma prévia com dados fictícios.
             </span>
             <button onClick={begin}>
-              Ativar meu cofre <ArrowRight size={14} />
+              Entrar no Cofre <ArrowRight size={14} />
             </button>
           </div>
         )}
@@ -1347,7 +1347,7 @@ export default function Cofre() {
                     </p>
                     {demo ? (
                       <button className="button primary" onClick={begin}>
-                        Ativar meu cofre
+                        Entrar no Cofre
                         <ArrowRight size={15} />
                       </button>
                     ) : (
@@ -1512,38 +1512,14 @@ export default function Cofre() {
               <section className="content-panel">
                 <div className="panel-top">
                   <div>
-                    <h2>Seu escritório</h2>
-                    <p>Informações do espaço de trabalho.</p>
+                    <h2>Sua conta</h2>
+                    <p>Acesso interno da Theodoro & Porto.</p>
                   </div>
                 </div>
-                <form
-                  className="panel-body form-stack"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const d = new FormData(e.currentTarget);
-                    act(async () => {
-                      if (demo)
-                        notify(
-                          "Ative seu Cofre para personalizar o escritório.",
-                        );
-                      else {
-                        await api("workspace", { name: d.get("name") });
-                        await reload();
-                        notify("Configurações salvas");
-                      }
-                    });
-                  }}
-                >
+                <div className="panel-body form-stack">
                   <label>
-                    Nome do escritório
-                    <input
-                      name="name"
-                      defaultValue={office}
-                      key={office}
-                      required
-                      maxLength={80}
-                      disabled={!demo && user?.role !== "admin"}
-                    />
+                    Organização
+                    <input value={office} readOnly />
                   </label>
                   <label>
                     Seu e-mail
@@ -1553,14 +1529,7 @@ export default function Cofre() {
                     Seu perfil
                     <input value={roles[user?.role || "admin"]} readOnly />
                   </label>
-                  <button
-                    className="button primary"
-                    disabled={busy || (!demo && user?.role !== "admin")}
-                    type="submit"
-                  >
-                    Salvar alterações
-                  </button>
-                </form>
+                </div>
               </section>
               <div>
                 <section className="content-panel">
@@ -2132,8 +2101,8 @@ export default function Cofre() {
             {[
               [
                 "1",
-                "Ative o seu escritório",
-                "Use o link reservado do administrador para definir sua senha e configurar o Google Authenticator.",
+                "Configure seu acesso",
+                "Use seu link individual para definir sua senha e configurar o Google Authenticator.",
               ],
               [
                 "2",
@@ -2175,15 +2144,15 @@ export default function Cofre() {
             <LockKeyhole size={38} />
           </div>
           <p className="center-muted">
-            Ative o seu escritório para proteger seus próprios dados com o
-            Google Authenticator.
+            Entre com sua conta para acessar as credenciais internas e confirmar
+            seu código do Google Authenticator.
           </p>
           <div className="modal-actions">
             <button className="button secondary" onClick={close}>
               Voltar à prévia
             </button>
             <button className="button primary" onClick={begin}>
-              Ativar meu cofre
+              Entrar no Cofre
             </button>
           </div>
         </Modal>

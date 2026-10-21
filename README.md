@@ -1,12 +1,12 @@
 # Cofre — Theodoro & Porto
 
-Gerenciador de senhas do escritório em português. React 19, Vinext, Cloudflare Workers e D1.
+Gerenciador de senhas de uso interno da Theodoro & Porto, em português. React 19, Vinext, Cloudflare Workers e D1. A organização é fixa, sem cadastro de escritórios ou seleção de empresas.
 
 ## Acesso
 
 O login usa **e-mail e senha próprios**, seguido de **Google Authenticator obrigatório**. O aplicativo não depende de conta ChatGPT. A hospedagem precisa permitir visitantes anônimos na página de login; as APIs do cofre exigem sessão própria com o segundo fator concluído.
 
-A primeira conta é criada por um link reservado ao responsável. O servidor valida o hash do token e sua validade antes de permitir a configuração. Depois que o escritório existe, o token não pode criar outra conta. Não existe cadastro público nem senha padrão.
+O responsável define apenas sua senha e configura o Google Authenticator por um link inicial reservado. O servidor valida o hash do token e sua validade antes de permitir esse primeiro acesso. Após a configuração do administrador, o token não pode criar outra conta. Não existe cadastro público nem senha padrão. Os demais usuários entram por convite do administrador.
 
 Administradores criam convites por e-mail e compartilham o link individual. Cada pessoa define a senha e configura seu autenticador por QR Code ou chave manual. Convites duram sete dias e são de uso único. O aplicativo não envia e-mails automaticamente.
 
@@ -22,6 +22,7 @@ Administradores criam convites por e-mail e compartilham o link individual. Cada
 - TOTP com proteção contra repetição, limite de tentativas e códigos de recuperação de uso único.
 - Alteração da própria senha com confirmação da senha atual e do segundo fator.
 - Links administrativos de redefinição válidos por uma hora. O segundo fator existente é preservado.
+- A prévia com dados fictícios fica disponível apenas em desenvolvimento; a publicação abre diretamente no login interno.
 
 ## Segurança implementada
 
