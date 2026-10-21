@@ -45,28 +45,31 @@ export function AuthScreen({
     [copied, setCopied] = useState(false),
     [help, setHelp] = useState(false);
   useEffect(() => {
-    const fragment = new URLSearchParams(window.location.hash.slice(1));
-    const setup = fragment.get("configurar"),
-      invitation = fragment.get("convite");
-    if (!setup && !invitation) return;
-    const value = setup || invitation!;
-    setToken(value);
-    setMode("checking");
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search,
-    );
-    api(setup ? "setup-info" : "invite-info", { token: value })
-      .then((result) => {
+    let current = "";
+    function readAccessLink() {
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const setup = fragment.get("configurar"), invitation = fragment.get("convite");
+      if (!setup && !invitation) return;
+      const value = setup || invitation!;
+      current = value;
+      setToken(value);
+      setError("");
+      setMode("checking");
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      api(setup ? "setup-info" : "invite-info", { token: value }).then(result => {
+        if (current !== value) return;
         setEmail(result.email);
         setName(result.name || "");
         setMode(setup ? "setup" : result.reset ? "reset" : "invite");
-      })
-      .catch((error) => {
+      }).catch(error => {
+        if (current !== value) return;
         setError(error.message);
         setMode("login");
       });
+    }
+    readAccessLink();
+    window.addEventListener("hashchange", readAccessLink);
+    return () => { current = ""; window.removeEventListener("hashchange", readAccessLink); };
   }, []);
   useEffect(() => {
     if (phase !== "enroll" || secret) return;
