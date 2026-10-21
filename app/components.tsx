@@ -107,57 +107,72 @@ export function generatePassword(
   }
   return chars.join("");
 }
-export function Brand({ item }: { item: Item }) {
-  const t = item.title.toLowerCase(),
-    type = t.includes("google")
-      ? "google"
-      : t.includes("figma")
-        ? "figma"
-        : t.includes("notion")
-          ? "notion"
-          : t === "banco inter" || t === "inter"
-            ? "inter"
-            : t.includes("slack")
-              ? "slack"
-              : t.includes("instagram")
-                ? "instagram"
-                : t.includes("amazon")
-                  ? "aws"
-                  : "generic";
+function faviconOrigin(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    // The request contains only the website origin, never credentials, paths or query strings.
+    url.protocol = "https:";
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+function WebsiteFavicon({
+  origin,
+  kind,
+}: {
+  origin: string | null;
+  kind: string;
+}) {
+  const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const paths = ["/favicon.ico", "/favicon.svg", "/apple-touch-icon.png"];
+  const source =
+    origin && attempt < paths.length ? origin + paths[attempt] : null;
   return (
-    <div className={`brand ${type}`}>
-      {type === "figma" ? (
-        <div className="figma-mark">
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-        </div>
-      ) : type === "instagram" ? (
-        <div className="insta-mark">
-          <i />
-        </div>
-      ) : type !== "generic" ? (
-        <span>
-          {
-            {
-              google: "G",
-              notion: "N",
-              inter: "inter",
-              slack: "✣",
-              aws: "aws",
-            }[type]
-          }
-        </span>
-      ) : item.kind === "note" ? (
-        <FileText size={21} />
-      ) : item.kind === "card" ? (
-        <CreditCard size={21} />
-      ) : (
-        <KeyRound size={21} />
+    <div
+      className={`brand ${source ? "website-favicon" : "generic"}`}
+      aria-hidden="true"
+    >
+      {!loaded &&
+        (kind === "note" ? (
+          <FileText size={21} />
+        ) : kind === "card" ? (
+          <CreditCard size={21} />
+        ) : (
+          <KeyRound size={21} />
+        ))}
+      {source && (
+        <img
+          key={source}
+          src={source}
+          alt=""
+          width={22}
+          height={22}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          draggable={false}
+          className={loaded ? "favicon-image is-loaded" : "favicon-image"}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setLoaded(false);
+            setAttempt((value) => value + 1);
+          }}
+        />
       )}
     </div>
+  );
+}
+export function Brand({ item }: { item: Item }) {
+  const origin = item.kind === "login" ? faviconOrigin(item.url) : null;
+  return (
+    <WebsiteFavicon
+      key={`${item.kind}:${origin || "none"}`}
+      origin={origin}
+      kind={item.kind}
+    />
   );
 }
 export function Modal({

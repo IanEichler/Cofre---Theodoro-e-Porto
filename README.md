@@ -16,6 +16,7 @@ Administradores criam convites por e-mail e compartilham o link individual. Cada
 - Itens pessoais ou compartilhados com a equipe inteira.
 - Administrador, editor e leitor; revogação de acesso com encerramento das sessões.
 - Busca, ordenação, lista e cartões, gerador de senhas no navegador.
+- Favicons obtidos diretamente do site cadastrado, com ícone padrão quando indisponíveis.
 - Lixeira, restauração e confirmação para exclusão permanente.
 - Controle de versão para evitar sobrescrever alterações de outra pessoa.
 - TOTP com proteção contra repetição, limite de tentativas e códigos de recuperação de uso único.
