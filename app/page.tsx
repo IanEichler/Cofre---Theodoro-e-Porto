@@ -65,128 +65,8 @@ type AppState = {
   activity?: Activity[];
   error?: string;
 };
-function demoData(): Item[] {
-  return [
-    [
-      "Google Workspace",
-      "admin@escritorio.exemplo",
-      "Google-Demo!9dR4xP7mZ",
-      "https://workspace.google.com",
-      "Administrativo",
-      "login",
-      true,
-    ],
-    [
-      "Notion",
-      "equipe@escritorio.exemplo",
-      "Notion-Demo!2jH6qL8s",
-      "https://notion.so",
-      "Administrativo",
-      "login",
-      true,
-    ],
-    [
-      "Figma",
-      "design@escritorio.exemplo",
-      "Figma-Demo!8fK3wN5v",
-      "https://figma.com",
-      "Marketing",
-      "login",
-      false,
-    ],
-    [
-      "Banco Inter",
-      "financeiro@escritorio.exemplo",
-      "Exemplo123",
-      "https://inter.co",
-      "Financeiro",
-      "login",
-      true,
-    ],
-    [
-      "Slack",
-      "equipe@escritorio.exemplo",
-      "Slack-Demo!4tS7bW2e",
-      "https://slack.com",
-      "Administrativo",
-      "login",
-      false,
-    ],
-    [
-      "Instagram",
-      "@escritorio.exemplo",
-      "Exemplo123",
-      "https://instagram.com",
-      "Marketing",
-      "login",
-      false,
-    ],
-    [
-      "Amazon Web Services",
-      "ti@escritorio.exemplo",
-      "AWS-Demo!6cY9nA4rX",
-      "https://aws.amazon.com",
-      "Tecnologia",
-      "login",
-      false,
-    ],
-    [
-      "Servidor do escritório",
-      "Acesso à rede interna",
-      "",
-      "",
-      "Tecnologia",
-      "note",
-      false,
-    ],
-  ].map((r, i) => ({
-    id: "demo-" + i,
-    title: String(r[0]),
-    username: String(r[1]),
-    password: String(r[2]),
-    url: String(r[3]),
-    vault: String(r[4]),
-    kind: String(r[5]),
-    favorite: !!r[6],
-    scope: i === 6 ? "personal" : "team",
-    tags: i === 0 ? ["Trabalho", "Principal"] : [],
-    notes:
-      "Dados fictícios para demonstração. Substitua pelos dados do seu escritório após ativar o Cofre.",
-    created: Date.now() - 86400000 * 30,
-    updated: Date.now() - 86400000 * [0, 1, 2, 3, 4, 5, 7, 10][i],
-    deleted: null,
-    version: 1,
-    canEdit: true,
-  }));
-}
-const demoPeople: Person[] = [
-  {
-    name: "Ana Martins",
-    email: "ana@escritorio.exemplo",
-    role: "admin",
-    status: "active",
-    twoFactor: true,
-  },
-  {
-    name: "Marina Costa",
-    email: "marina@escritorio.exemplo",
-    role: "editor",
-    status: "active",
-    twoFactor: true,
-  },
-  {
-    name: "Pedro Alves",
-    email: "pedro@escritorio.exemplo",
-    role: "reader",
-    status: "invited",
-    twoFactor: false,
-  },
-];
 export default function Cofre() {
   const [state, setState] = useState<AppState>({ phase: "loading" }),
-    [demo, setDemo] = useState(false),
-    [samples, setSamples] = useState<Item[]>([]),
-    [samplePeople, setSamplePeople] = useState(demoPeople),
     [view, setView] = useState("all"),
     [search, setSearch] = useState(""),
     [sort, setSort] = useState("recent"),
@@ -212,9 +92,9 @@ export default function Cofre() {
       action: () => Promise<void>;
     } | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const items = demo ? samples : state.items || [],
-    people = demo ? samplePeople : state.members || [],
-    user = demo ? demoPeople[0] : state.user,
+  const items = state.items || [],
+    people = state.members || [],
+    user = state.user,
     office = ORGANIZATION_NAME,
     active = items.filter((i) => !i.deleted),
     weak = active.filter(
@@ -227,35 +107,23 @@ export default function Cofre() {
         active.filter((j) => j.kind === "login" && j.password === i.password)
           .length > 1,
     ),
-    vaults = Array.from(
-      new Set([
-        "Administrativo",
-        "Financeiro",
-        "Marketing",
-        "Tecnologia",
-        ...active.map((i) => i.vault),
-      ]),
-    );
+    vaults = Array.from(new Set(active.map((i) => i.vault)));
   const logins = active.filter((i) => i.kind === "login");
   const score = logins.length
     ? Math.round(
-        100 -
-          (new Set([...weak, ...reused].map((i) => i.id)).size /
-            logins.length) *
-            100,
-      )
-    : 100;
+      100 -
+      (new Set([...weak, ...reused].map((i) => i.id)).size /
+        logins.length) *
+      100,
+    )
+    : null;
   const notify = (text: string) => setToast(text);
   const reload = useCallback(async () => {
     try {
       const res = await fetch("/api/cofre", { cache: "no-store" }),
         data = (await res.json()) as AppState;
       setState(data);
-      if (data.phase === "open") {
-        setDemo(false);
-      } else {
-        setSelected(null);
-      }
+      if (data.phase !== "open") setSelected(null);
     } catch {
       setState({
         phase: "error",
@@ -264,7 +132,6 @@ export default function Cofre() {
     }
   }, []);
   useEffect(() => {
-    setSamples(demoData());
     reload();
   }, [reload]);
   useEffect(() => {
@@ -288,10 +155,6 @@ export default function Cofre() {
     return () => window.removeEventListener("keydown", fn);
   }, []);
   const lock = useCallback(async () => {
-    if (demo) {
-      setModal("demoLock");
-      return;
-    }
     try {
       await api("logout");
     } catch {
@@ -303,12 +166,12 @@ export default function Cofre() {
       setSelected(null);
       setModal(null);
     }
-  }, [demo]);
+  }, []);
   useEffect(() => {
-    if (demo || state.phase !== "open") return;
+    if (state.phase !== "open") return;
     const t = setInterval(() => reload(), 60000);
     return () => clearInterval(t);
-  }, [demo, state.phase, reload]);
+  }, [state.phase, reload]);
   async function act(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -359,27 +222,9 @@ export default function Cofre() {
   }
   async function change(op: string, item: Item, value?: boolean) {
     await act(async () => {
-      if (demo)
-        setSamples((prev) =>
-          op === "delete"
-            ? prev.filter((i) => i.id !== item.id)
-            : prev.map((i) =>
-                i.id === item.id
-                  ? {
-                      ...i,
-                      ...(op === "favorite"
-                        ? { favorite: !!value }
-                        : op === "restore"
-                          ? { deleted: null }
-                          : { deleted: Date.now() }),
-                    }
-                  : i,
-              ),
-        );
-      else {
-        await api(op, { id: item.id, value });
-        await reload();
-      }
+      await api(op, { id: item.id, value });
+      await reload();
+
       if (op !== "favorite") setSelected(null);
       notify(
         op === "favorite"
@@ -394,14 +239,9 @@ export default function Cofre() {
       );
     });
   }
-  function begin() {
-    setDemo(false);
-    setSelected(null);
-    setModal(null);
-  }
   const vaultView =
-      ["all", "favorites", "shared", "trash"].includes(view) ||
-      view.startsWith("vault:"),
+    ["all", "favorites", "shared", "trash"].includes(view) ||
+    view.startsWith("vault:"),
     titles: Record<string, string> = {
       all: "Todas as senhas",
       favorites: "Seus favoritos",
@@ -443,7 +283,7 @@ export default function Cofre() {
     { id: "shared", label: "Compartilhados", Icon: Users },
     { id: "trash", label: "Lixeira", Icon: Trash2 },
   ];
-  if (!demo && state.phase !== "open")
+  if (state.phase !== "open")
     return (
       <AuthScreen
         phase={state.phase}
@@ -453,11 +293,6 @@ export default function Cofre() {
         onRecovery={(codes) => {
           setRecovery(codes);
           setModal("recovery");
-        }}
-        onPreview={() => {
-          setDemo(true);
-          setView("all");
-          setSearch("");
         }}
       />
     );
@@ -551,9 +386,7 @@ export default function Cofre() {
             <div>
               <strong>Um lugar mais seguro.</strong>
               <small>
-                {demo
-                  ? "Conheça o seu novo Cofre."
-                  : "Seus dados são criptografados."}
+                Seus dados são criptografados.
               </small>
             </div>
           </div>
@@ -641,17 +474,7 @@ export default function Cofre() {
             </button>
           </div>
         </header>
-        {demo && (
-          <div className="demo-banner">
-            <span>
-              <span className="status-dot" />
-              Você está explorando uma prévia com dados fictícios.
-            </span>
-            <button onClick={begin}>
-              Entrar no Cofre <ArrowRight size={14} />
-            </button>
-          </div>
-        )}
+
         <main>
           <div className="page-heading">
             <div>
@@ -689,7 +512,7 @@ export default function Cofre() {
                     Novo item
                   </button>
                 </>
-              ) : view === "team" && (user?.role === "admin" || demo) ? (
+              ) : view === "team" && (user?.role === "admin") ? (
                 <button
                   className="button primary"
                   onClick={() => open("invite")}
@@ -745,18 +568,20 @@ export default function Cofre() {
                     </span>
                   </span>
                   <div className="stat-value">
-                    {score}
-                    <span className="score-unit">/ 100</span>
+                    {score ?? "—"}
+                    {score !== null && <span className="score-unit">/ 100</span>}
                     <span
-                      className={`stat-tag ${score >= 90 ? "good" : "warn"}`}
+                      className={`stat-tag ${score === null ? "" : score >= 90 ? "good" : "warn"}`}
                     >
-                      {score >= 90 ? "Excelente" : "Pode melhorar"}
+                      {score === null ? "Sem análise" : score >= 90 ? "Excelente" : "Pode melhorar"}
                     </span>
                   </div>
                   <div className="stat-bottom">
-                    {weak.length
-                      ? `${weak.length} senhas precisam de atenção`
-                      : "Nenhuma senha fraca detectada"}
+                    {!logins.length
+                      ? "Adicione uma senha para iniciar a análise"
+                      : weak.length
+                        ? `${weak.length} senhas precisam de atenção`
+                        : "Nenhuma senha fraca detectada"}
                   </div>
                 </button>
                 <button className="stat-card" onClick={() => nav("team")}>
@@ -781,7 +606,7 @@ export default function Cofre() {
                           </i>
                         ))}
                     </span>
-                    {people.filter((p) => p.status === "invited").length}{" "}
+                    {people.filter((p) => p.status === "invited").length}
                     convite pendente
                   </div>
                 </button>
@@ -975,9 +800,9 @@ export default function Cofre() {
                                       : item.kind === "card"
                                         ? "Cartão"
                                         : item.url.replace(
-                                            /^https?:\/\//,
-                                            "",
-                                          ) || "Credencial"}
+                                          /^https?:\/\//,
+                                          "",
+                                        ) || "Credencial"}
                                   </small>
                                 </span>
                               </button>
@@ -1067,9 +892,7 @@ export default function Cofre() {
                 <div className="table-footer">
                   <span>
                     <LockKeyhole size={12} />
-                    {demo
-                      ? "Dados fictícios · Apenas para demonstração"
-                      : "Criptografia AES-256-GCM no armazenamento"}
+                    Criptografia AES-256-GCM no armazenamento
                   </span>
                   <span>Mostrando {visible.length} itens</span>
                 </div>
@@ -1118,7 +941,7 @@ export default function Cofre() {
               <div className="panel-top">
                 <div>
                   <h2>
-                    Pessoas e permissões{" "}
+                    Pessoas e permissões
                     <span className="count-badge">{people.length}</span>
                   </h2>
                   <p>
@@ -1127,7 +950,7 @@ export default function Cofre() {
                   </p>
                 </div>
               </div>
-              {!demo && user?.role !== "admin" ? (
+              {user?.role !== "admin" ? (
                 <div className="empty">
                   <Users size={30} />
                   <h3>A gestão da equipe é exclusiva dos administradores.</h3>
@@ -1170,21 +993,12 @@ export default function Cofre() {
                               onChange={(e) => {
                                 const role = e.target.value;
                                 act(async () => {
-                                  if (demo)
-                                    setSamplePeople((prev) =>
-                                      prev.map((v) =>
-                                        v.email === p.email
-                                          ? { ...v, role }
-                                          : v,
-                                      ),
-                                    );
-                                  else {
-                                    await api("member", {
-                                      email: p.email,
-                                      role,
-                                    });
-                                    await reload();
-                                  }
+                                  await api("member", {
+                                    email: p.email,
+                                    role,
+                                  });
+                                  await reload();
+
                                   notify("Permissão atualizada");
                                 });
                               }}
@@ -1223,12 +1037,6 @@ export default function Cofre() {
                                     className="text-button reset-account-button"
                                     onClick={() =>
                                       act(async () => {
-                                        if (demo) {
-                                          notify(
-                                            "Disponível no seu cofre ativo.",
-                                          );
-                                          return;
-                                        }
                                         const result = await api(
                                           "reset-account",
                                           { email: p.email },
@@ -1247,21 +1055,12 @@ export default function Cofre() {
                                         title: "Revogar acesso?",
                                         text: `${p.name} perderá o acesso aos cofres da equipe e suas sessões serão encerradas.`,
                                         action: async () => {
-                                          if (demo)
-                                            setSamplePeople((prev) =>
-                                              prev.map((v) =>
-                                                v.email === p.email
-                                                  ? { ...v, status: "revoked" }
-                                                  : v,
-                                              ),
-                                            );
-                                          else {
-                                            await api("member", {
-                                              email: p.email,
-                                              revoke: true,
-                                            });
-                                            await reload();
-                                          }
+                                          await api("member", {
+                                            email: p.email,
+                                            revoke: true,
+                                          });
+                                          await reload();
+
                                           notify("Acesso revogado");
                                         },
                                       })
@@ -1294,24 +1093,28 @@ export default function Cofre() {
               <section className="security-hero">
                 <div
                   className="security-ring"
-                  style={{ "--score": score + "%" } as React.CSSProperties}
+                  style={{ "--score": (score ?? 0) + "%" } as React.CSSProperties}
                 >
                   <div>
-                    <strong>{score}</strong>
-                    <span>de 100</span>
+                    <strong>{score ?? "—"}</strong>
+                    <span>{score === null ? "sem análise" : "de 100"}</span>
                   </div>
                 </div>
                 <div>
                   <span className="eyebrow">SAÚDE DO SEU COFRE</span>
                   <h2>
-                    {score >= 90
-                      ? "Tudo sob controle."
-                      : "Vamos deixar suas senhas mais fortes?"}
+                    {score === null
+                      ? "Adicione sua primeira senha."
+                      : score >= 90
+                        ? "Tudo sob controle."
+                        : "Vamos deixar suas senhas mais fortes?"}
                   </h2>
                   <p>
-                    {weak.length
-                      ? `${weak.length} senhas fracas e ${reused.length} credenciais com senha repetida merecem atenção.`
-                      : "Continue usando uma senha longa e exclusiva em cada serviço."}
+                    {!logins.length
+                      ? "A análise de segurança começa quando você salva uma senha no Cofre."
+                      : weak.length
+                        ? `${weak.length} senhas fracas e ${reused.length} credenciais com senha repetida merecem atenção.`
+                        : "Continue usando uma senha longa e exclusiva em cada serviço."}
                   </p>
                   <small>
                     A análise considera tamanho, composição e repetição. Não
@@ -1332,11 +1135,9 @@ export default function Cofre() {
                     <span
                       className={`status-pill ${user?.twoFactor ? "green" : "orange"}`}
                     >
-                      {demo
-                        ? "Exemplo"
-                        : user?.twoFactor
-                          ? "Ativada"
-                          : "Pendente"}
+                      {user?.twoFactor
+                        ? "Ativada"
+                        : "Pendente"}
                     </span>
                   </div>
                   <div className="panel-body">
@@ -1345,17 +1146,10 @@ export default function Cofre() {
                       seis dígitos do aplicativo autenticador. Cada pessoa
                       configura o próprio segundo fator.
                     </p>
-                    {demo ? (
-                      <button className="button primary" onClick={begin}>
-                        Entrar no Cofre
-                        <ArrowRight size={15} />
-                      </button>
-                    ) : (
-                      <div className="inline-success">
-                        <Check size={17} />
-                        Sua conta está protegida por duas etapas.
-                      </div>
-                    )}
+                    <div className="inline-success">
+                      <Check size={17} />
+                      Sua conta está protegida por duas etapas.
+                    </div>
                   </div>
                 </section>
                 <section className="content-panel">
@@ -1436,10 +1230,11 @@ export default function Cofre() {
                 {!weak.length && !reused.length && (
                   <div className="empty compact">
                     <ShieldCheck size={30} />
-                    <h3>Nenhum alerta por aqui.</h3>
+                    <h3>{logins.length ? "Nenhum alerta por aqui." : "Nenhuma senha para analisar."}</h3>
                     <p>
-                      Suas senhas atendem aos critérios locais de força e
-                      exclusividade.
+                      {logins.length
+                        ? "Suas senhas atendem aos critérios locais de força e exclusividade."
+                        : "Adicione suas credenciais para verificar a força e a repetição das senhas."}
                     </p>
                   </div>
                 )}
@@ -1457,28 +1252,7 @@ export default function Cofre() {
                   </p>
                 </div>
               </div>
-              {(demo
-                ? [
-                    {
-                      actor: "ana@escritorio.exemplo",
-                      action: "Item criado",
-                      target: "Google Workspace",
-                      time: Date.now() - 3600000,
-                    },
-                    {
-                      actor: "marina@escritorio.exemplo",
-                      action: "Item atualizado",
-                      target: "Figma",
-                      time: Date.now() - 7200000,
-                    },
-                    {
-                      actor: "ana@escritorio.exemplo",
-                      action: "Acesso autorizado",
-                      target: "pedro@escritorio.exemplo",
-                      time: Date.now() - 86400000,
-                    },
-                  ]
-                : state.activity || []
+              {(state.activity || []
               ).map((a, i) => (
                 <div className="activity-row" key={i}>
                   <span className="activity-icon">
@@ -1499,7 +1273,7 @@ export default function Cofre() {
                   </time>
                 </div>
               ))}
-              {!demo && !state.activity?.length && (
+              {!state.activity?.length && (
                 <div className="empty">
                   <Clock3 size={30} />
                   <h3>Seu histórico começa aqui.</h3>
@@ -1558,91 +1332,87 @@ export default function Cofre() {
                       <LockKeyhole size={15} />
                       Bloquear agora
                     </button>
-                    {!demo && (
-                      <button className="signout-link" onClick={lock}>
-                        <LogOut size={15} />
-                        Sair da conta
-                      </button>
-                    )}
+                    <button className="signout-link" onClick={lock}>
+                      <LogOut size={15} />
+                      Sair da conta
+                    </button>
                   </div>
                 </section>
-                {!demo && (
-                  <section className="content-panel password-settings">
-                    <div className="panel-top">
-                      <div>
-                        <h2>Alterar senha de acesso</h2>
-                        <p>Confirme a senha atual e o segundo fator.</p>
-                      </div>
+                <section className="content-panel password-settings">
+                  <div className="panel-top">
+                    <div>
+                      <h2>Alterar senha de acesso</h2>
+                      <p>Confirme a senha atual e o segundo fator.</p>
                     </div>
-                    <form
-                      className="panel-body form-stack"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const d = new FormData(e.currentTarget);
-                        if (d.get("newPassword") !== d.get("confirmPassword")) {
-                          notify("As novas senhas não coincidem.");
-                          return;
-                        }
-                        act(async () => {
-                          await api("change-password", {
-                            currentPassword: d.get("currentPassword"),
-                            newPassword: d.get("newPassword"),
-                            code: d.get("code"),
-                          });
-                          setState({ phase: "signin" });
-                          setSelected(null);
-                          notify("Senha alterada. Entre novamente.");
+                  </div>
+                  <form
+                    className="panel-body form-stack"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const d = new FormData(e.currentTarget);
+                      if (d.get("newPassword") !== d.get("confirmPassword")) {
+                        notify("As novas senhas não coincidem.");
+                        return;
+                      }
+                      act(async () => {
+                        await api("change-password", {
+                          currentPassword: d.get("currentPassword"),
+                          newPassword: d.get("newPassword"),
+                          code: d.get("code"),
                         });
-                      }}
-                    >
-                      <label>
-                        Senha atual
-                        <input
-                          type="password"
-                          name="currentPassword"
-                          autoComplete="current-password"
-                          maxLength={128}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Nova senha
-                        <input
-                          type="password"
-                          name="newPassword"
-                          autoComplete="new-password"
-                          minLength={12}
-                          maxLength={128}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Confirme a nova senha
-                        <input
-                          type="password"
-                          name="confirmPassword"
-                          autoComplete="new-password"
-                          minLength={12}
-                          maxLength={128}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Código do Google Authenticator
-                        <input
-                          name="code"
-                          autoComplete="one-time-code"
-                          placeholder="000 000"
-                          required
-                          maxLength={32}
-                        />
-                      </label>
-                      <button className="button primary" disabled={busy}>
-                        Alterar senha e encerrar sessões
-                      </button>
-                    </form>
-                  </section>
-                )}
+                        setState({ phase: "signin" });
+                        setSelected(null);
+                        notify("Senha alterada. Entre novamente.");
+                      });
+                    }}
+                  >
+                    <label>
+                      Senha atual
+                      <input
+                        type="password"
+                        name="currentPassword"
+                        autoComplete="current-password"
+                        maxLength={128}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Nova senha
+                      <input
+                        type="password"
+                        name="newPassword"
+                        autoComplete="new-password"
+                        minLength={12}
+                        maxLength={128}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Confirme a nova senha
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        autoComplete="new-password"
+                        minLength={12}
+                        maxLength={128}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Código do Google Authenticator
+                      <input
+                        name="code"
+                        autoComplete="one-time-code"
+                        placeholder="000 000"
+                        required
+                        maxLength={32}
+                      />
+                    </label>
+                    <button className="button primary" disabled={busy}>
+                      Alterar senha e encerrar sessões
+                    </button>
+                  </form>
+                </section>
                 <div className="settings-note">
                   <ShieldCheck size={20} />
                   <p>
@@ -1659,7 +1429,7 @@ export default function Cofre() {
             </span>
             <button onClick={lock}>
               <LockKeyhole size={13} />
-              {demo ? "Bloquear prévia" : "Bloquear cofre"}
+              Bloquear cofre
             </button>
           </footer>
         </main>
@@ -1800,7 +1570,7 @@ export default function Cofre() {
                 </div>
               )}
               <p className="detail-timestamp">
-                Atualizado em{" "}
+                Atualizado em
                 {new Date(selected.updated).toLocaleDateString("pt-BR")}
               </p>
             </div>
@@ -1885,43 +1655,14 @@ export default function Cofre() {
             vaults={vaults}
             busy={busy}
             error={error}
-            reader={!demo && user?.role === "reader"}
+            reader={user?.role === "reader"}
             onSave={(value) =>
               act(async () => {
-                if (demo) {
-                  const now = Date.now();
-                  setSamples((prev) =>
-                    editing?.id
-                      ? prev.map((i) =>
-                          i.id === editing.id
-                            ? {
-                                ...i,
-                                ...value,
-                                updated: now,
-                                version: i.version + 1,
-                              }
-                            : i,
-                        )
-                      : [
-                          {
-                            ...value,
-                            id: crypto.randomUUID(),
-                            created: now,
-                            updated: now,
-                            deleted: null,
-                            favorite: false,
-                            version: 1,
-                            canEdit: true,
-                          },
-                          ...prev,
-                        ],
-                  );
-                } else {
-                  await api("save", {
-                    item: editing ? { ...editing, ...value } : value,
-                  });
-                  await reload();
-                }
+                await api("save", {
+                  item: editing ? { ...editing, ...value } : value,
+                });
+                await reload();
+
                 close();
                 notify(
                   editing?.id ? "Item atualizado" : "Item adicionado ao cofre",
@@ -1977,19 +1718,10 @@ export default function Cofre() {
                   status: "invited",
                   twoFactor: false,
                 };
-                if (demo) {
-                  if (samplePeople.some((v) => v.email === p.email))
-                    throw new Error("Este e-mail já faz parte da equipe.");
-                  setSamplePeople((prev) => [...prev, p]);
-                } else {
-                  const result = await api("invite", p);
-                  setInviteLink(result.invitationUrl);
-                  await reload();
-                  setModal("inviteLink");
-                  return;
-                }
-                close();
-                notify("Convite de demonstração criado.");
+                const result = await api("invite", p);
+                setInviteLink(result.invitationUrl);
+                await reload();
+                setModal("inviteLink");
               });
             }}
           >
@@ -2007,7 +1739,7 @@ export default function Cofre() {
               <input
                 name="email"
                 type="email"
-                placeholder="pessoa@escritorio.com.br"
+                placeholder="E-mail da pessoa"
                 required
                 maxLength={200}
               />
@@ -2075,7 +1807,7 @@ export default function Cofre() {
               Nome do cofre
               <input
                 name="name"
-                placeholder="Ex.: Jurídico"
+                placeholder="Nome do departamento ou grupo"
                 required
                 maxLength={60}
               />
@@ -2132,29 +1864,6 @@ export default function Cofre() {
             Entendi, vamos lá
             <ArrowRight size={16} />
           </button>
-        </Modal>
-      )}
-      {modal === "demoLock" && (
-        <Modal
-          title="Prévia bloqueada."
-          subtitle="No seu Cofre, o desbloqueio exige o código do autenticador."
-          onClose={close}
-        >
-          <div className="auth-symbol">
-            <LockKeyhole size={38} />
-          </div>
-          <p className="center-muted">
-            Entre com sua conta para acessar as credenciais internas e confirmar
-            seu código do Google Authenticator.
-          </p>
-          <div className="modal-actions">
-            <button className="button secondary" onClick={close}>
-              Voltar à prévia
-            </button>
-            <button className="button primary" onClick={begin}>
-              Entrar no Cofre
-            </button>
-          </div>
         </Modal>
       )}
       {modal === "recovery" && (

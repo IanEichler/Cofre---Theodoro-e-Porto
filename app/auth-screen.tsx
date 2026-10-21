@@ -24,14 +24,12 @@ export function AuthScreen({
   serverError,
   reload,
   onRecovery,
-  onPreview,
 }: {
   phase: string;
   user?: Person;
   serverError?: string;
   reload: () => Promise<void>;
   onRecovery: (codes: string[]) => void;
-  onPreview: () => void;
 }) {
   const [mode, setMode] = useState("login"),
     [token, setToken] = useState(""),
@@ -431,7 +429,7 @@ export function AuthScreen({
                     name="email"
                     type="email"
                     autoComplete="username"
-                    placeholder="voce@theodoroeporto.adv.br"
+                    placeholder="Seu e-mail de acesso"
                     required
                     maxLength={200}
                   />
@@ -490,12 +488,6 @@ export function AuthScreen({
                   Google Authenticator. Uma camada extra de cuidado.
                 </p>
               </div>
-              {process.env.NODE_ENV === "development" && (
-                <button className="auth-demo-link" onClick={onPreview}>
-                  Conhecer a interface com dados fictícios
-                  <ArrowRight size={13} />
-                </button>
-              )}
             </>
           )}
         </div>

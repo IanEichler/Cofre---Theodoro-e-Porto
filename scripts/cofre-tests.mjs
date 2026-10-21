@@ -48,6 +48,8 @@ const [enrollment,parallelEnrollment]=await Promise.all([request(a,'enroll'),req
 const auth=await request(a,'verify',{code:await totp(enrollment.secret,Math.floor(Date.now()/30000))});
 assert.equal(auth.recoveryCodes.length,10);
 assert.equal((await request(a)).phase,'open');
+assert.deepEqual((await request(a)).items,[]);
+assert.deepEqual((await request(a)).members.map(member=>member.email),[a.email]);
 assert.equal((await request(a)).workspace,'Theodoro & Porto');
 await request(a,'workspace',{name:'Outra empresa'},400);
 assert.equal((await request(a)).workspace,'Theodoro & Porto');

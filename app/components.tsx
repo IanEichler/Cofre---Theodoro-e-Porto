@@ -334,7 +334,7 @@ export function ItemForm({
         <input
           name="title"
           defaultValue={item?.title || ""}
-          placeholder="Ex.: Google Workspace"
+          placeholder="Nome do serviço ou acesso"
           required
           maxLength={120}
         />
@@ -346,7 +346,7 @@ export function ItemForm({
             <input
               name="username"
               defaultValue={item?.username || ""}
-              placeholder="equipe@escritorio.com.br"
+              placeholder="Usuário ou e-mail de acesso"
               maxLength={200}
               autoComplete="off"
             />
@@ -405,7 +405,8 @@ export function ItemForm({
           <input
             name="vault"
             list="vault-options"
-            defaultValue={item?.vault || "Administrativo"}
+            defaultValue={item?.vault || ""}
+            placeholder="Nome do departamento ou grupo"
             required
             maxLength={60}
           />
@@ -444,7 +445,7 @@ export function ItemForm({
         <input
           name="tags"
           defaultValue={item?.tags?.join(", ") || ""}
-          placeholder="Ex.: Trabalho, Principal"
+          placeholder="Separe os marcadores por vírgula"
           maxLength={300}
         />
       </label>

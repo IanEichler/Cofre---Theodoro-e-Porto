@@ -22,7 +22,7 @@ Administradores criam convites por e-mail e compartilham o link individual. Cada
 - TOTP com proteção contra repetição, limite de tentativas e códigos de recuperação de uso único.
 - Alteração da própria senha com confirmação da senha atual e do segundo fator.
 - Links administrativos de redefinição válidos por uma hora. O segundo fator existente é preservado.
-- A prévia com dados fictícios fica disponível apenas em desenvolvimento; a publicação abre diretamente no login interno.
+- O app usa apenas registros cadastrados pela equipe, sem dados de demonstração, contas de exemplo ou cofres predefinidos. Indicadores de segurança ficam sem análise até existir uma senha salva.
 
 ## Segurança implementada
 
